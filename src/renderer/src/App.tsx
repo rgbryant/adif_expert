@@ -3,16 +3,27 @@ import type { FileEntry } from '../../shared/types'
 import { FileList } from './components/FileList'
 import { LogTable } from './components/LogTable'
 import { useAdifFile } from './hooks/useAdifFile'
-import { collectFields, mergeColumnVisibility } from './lib/columns'
+import { collectFields, DEFAULT_VISIBLE_FIELDS, mergeColumnVisibility } from './lib/columns'
 
 function App(): React.JSX.Element {
   const [folder, setFolder] = useState<string | null>(null)
   const [files, setFiles] = useState<FileEntry[]>([])
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({})
+  const [addContactFields, setAddContactFields] = useState<string[]>(DEFAULT_VISIBLE_FIELDS)
   const [prefsLoaded, setPrefsLoaded] = useState(false)
 
-  const { records, loading, error } = useAdifFile(selectedPath)
+  const {
+    records,
+    loading,
+    error,
+    saving,
+    saveError,
+    updateCell,
+    bulkSetColumns,
+    deleteRows,
+    addRecord
+  } = useAdifFile(selectedPath)
   const fields = useMemo(() => collectFields(records), [records])
   // Fields the current file introduces get a default visibility; anything the
   // user already chose (persisted in `columnVisibility`) is left untouched.
@@ -26,6 +37,7 @@ function App(): React.JSX.Element {
     window.api.getPrefs().then((prefs) => {
       setFolder(prefs.lastFolder ?? null)
       setColumnVisibility(prefs.columnVisibility ?? {})
+      setAddContactFields(prefs.addContactFields ?? DEFAULT_VISIBLE_FIELDS)
       setPrefsLoaded(true)
     })
   }, [])
@@ -42,8 +54,8 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     if (!prefsLoaded) return
-    window.api.setPrefs({ lastFolder: folder ?? undefined, columnVisibility })
-  }, [folder, columnVisibility, prefsLoaded])
+    window.api.setPrefs({ lastFolder: folder ?? undefined, columnVisibility, addContactFields })
+  }, [folder, columnVisibility, addContactFields, prefsLoaded])
 
   const handleOpenFolder = async (): Promise<void> => {
     const path = await window.api.selectDirectory()
@@ -64,14 +76,23 @@ function App(): React.JSX.Element {
         onOpenFolder={handleOpenFolder}
       />
       <main className="app__main">
-        {selectedPath && error && <div className="app__error">{error}</div>}
+        {selectedPath && (error || saveError) && (
+          <div className="app__error">{error ?? saveError}</div>
+        )}
         <LogTable
           fileName={selectedFile?.name ?? null}
           records={records}
           fields={fields}
           loading={loading}
+          saving={saving}
           columnVisibility={effectiveVisibility}
           onColumnVisibilityChange={setColumnVisibility}
+          onUpdateCell={updateCell}
+          onBulkSetColumns={bulkSetColumns}
+          onDeleteRows={deleteRows}
+          onAddRecord={addRecord}
+          addContactFields={addContactFields}
+          onAddContactFieldsChange={setAddContactFields}
         />
       </main>
     </div>

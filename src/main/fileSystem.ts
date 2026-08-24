@@ -29,6 +29,13 @@ export function readAdifFile(filePath: string): Promise<string> {
   return fs.readFile(filePath, 'utf-8')
 }
 
+/** Writes atomically (temp file + rename) so a crash mid-write can't leave a truncated log. */
+export async function writeAdifFile(filePath: string, contents: string): Promise<void> {
+  const tmpPath = `${filePath}.tmp`
+  await fs.writeFile(tmpPath, contents, 'utf-8')
+  await fs.rename(tmpPath, filePath)
+}
+
 /** Watches a folder (non-recursive) and calls onChange when its contents change. */
 export function watchDirectory(dirPath: string, onChange: () => void): FSWatcher {
   const watcher = chokidar.watch(dirPath, {

@@ -8,4 +8,5 @@ export interface FileEntry {
 export interface Prefs {
   lastFolder?: string
   columnVisibility?: Record<string, boolean>
+  addContactFields?: string[]
 }

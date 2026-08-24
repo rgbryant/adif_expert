@@ -8,6 +8,8 @@ const api = {
     ipcRenderer.invoke('list-adif-files', dirPath),
   readAdifFile: (filePath: string): Promise<string> =>
     ipcRenderer.invoke('read-adif-file', filePath),
+  writeAdifFile: (filePath: string, contents: string): Promise<void> =>
+    ipcRenderer.invoke('write-adif-file', filePath, contents),
   watchDirectory: (dirPath: string): Promise<void> =>
     ipcRenderer.invoke('watch-directory', dirPath),
   onFilesChanged: (callback: () => void): (() => void) => {

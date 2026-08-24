@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import type { FSWatcher } from 'chokidar'
 import icon from '../../resources/icon.png?asset'
-import { listAdifFiles, readAdifFile, watchDirectory } from './fileSystem'
+import { listAdifFiles, readAdifFile, watchDirectory, writeAdifFile } from './fileSystem'
 import { readPrefs, writePrefs } from './store'
 import type { Prefs } from '../shared/types'
 
@@ -69,6 +69,10 @@ app.whenReady().then(() => {
   ipcMain.handle('list-adif-files', (_event, dirPath: string) => listAdifFiles(dirPath))
 
   ipcMain.handle('read-adif-file', (_event, filePath: string) => readAdifFile(filePath))
+
+  ipcMain.handle('write-adif-file', (_event, filePath: string, contents: string) =>
+    writeAdifFile(filePath, contents)
+  )
 
   ipcMain.handle('watch-directory', (event, dirPath: string) => {
     stopWatching()
